@@ -5,9 +5,15 @@ COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Image finale légère Java 17
+# Image finale
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8020
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Passe les variables Railway directement à Spring Boot au démarrage
+ENTRYPOINT ["sh", "-c", "java -jar app.jar \
+  --spring.datasource.url=${SPRING_DATASOURCE_URL} \
+  --spring.datasource.username=${SPRING_DATASOURCE_USERNAME} \
+  --spring.datasource.password=${SPRING_DATASOURCE_PASSWORD} \
+  --server.port=${PORT:-8020}"]
