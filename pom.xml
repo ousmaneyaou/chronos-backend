@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.3</version>
+		<version>3.4.3</version>
 		<relativePath/>
 	</parent>
 
@@ -17,6 +17,9 @@
 
 	<properties>
 		<java.version>17</java.version>
+		<!-- ← CORRIGÉ : encodage UTF-8 pour éviter MalformedInputException -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 
 	<dependencies>
@@ -24,7 +27,7 @@
 		<!-- Web MVC -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webmvc</artifactId>
+			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
 		<!-- JPA + Hibernate -->
@@ -69,11 +72,27 @@
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<!-- ← Force l'encodage UTF-8 pour application.properties -->
+			</resource>
+		</resources>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<configuration>
+					<!-- ← Encodage explicite pour maven-resources-plugin -->
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<encoding>UTF-8</encoding>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
