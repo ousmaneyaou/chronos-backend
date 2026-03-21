@@ -40,6 +40,7 @@ public class DataInitializer implements CommandLineRunner {
         Category classique = categoryRepository.save(Category.builder().name("Classique").description("Élégance intemporelle").build());
         Category connectee = categoryRepository.save(Category.builder().name("Connectée").description("Smartwatches modernes").build());
 
+        // ── Luxe ──
         watchRepository.save(Watch.builder()
                 .name("Royal Oak Chronographe").brand("Audemars Piguet")
                 .description("Icône de l'horlogerie suisse, cadran bleu, bracelet intégré acier.")
@@ -57,6 +58,15 @@ public class DataInitializer implements CommandLineRunner {
                 .imageUrl("https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400").build());
 
         watchRepository.save(Watch.builder()
+                .name("Calatrava Ref. 5196").brand("Patek Philippe")
+                .description("La quintessence de l'élégance classique en or jaune 18K.")
+                .price(new BigDecimal("2000")).stock(2).reference("5196J-001")
+                .material("Or jaune 18K").movement("Manuel Cal. 215 PS").waterResistance("30m")
+                .category(luxe).active(true)
+                .imageUrl("https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400").build());
+
+        // ── Classique ──
+        watchRepository.save(Watch.builder()
                 .name("Speedmaster Moonwatch").brand("Omega")
                 .description("La montre des astronautes, portée sur la Lune en 1969.")
                 .price(new BigDecimal("6000")).stock(8).reference("310.30.42.50.01.001")
@@ -64,6 +74,15 @@ public class DataInitializer implements CommandLineRunner {
                 .category(classique).active(true)
                 .imageUrl("https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=400").build());
 
+        watchRepository.save(Watch.builder()
+                .name("Santos de Cartier").brand("Cartier")
+                .description("Premier bracelet-montre de l'histoire, design iconique.")
+                .price(new BigDecimal("7000")).stock(7).reference("WSSA0009")
+                .material("Acier & Or jaune").movement("Automatique Cal. 1847 MC").waterResistance("100m")
+                .category(classique).active(true)
+                .imageUrl("https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400").build());
+
+        // ── Sport ──
         watchRepository.save(Watch.builder()
                 .name("Seamaster 300").brand("Omega")
                 .description("Montre de plongée professionnelle, style James Bond.")
@@ -81,13 +100,14 @@ public class DataInitializer implements CommandLineRunner {
                 .imageUrl("https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400").build());
 
         watchRepository.save(Watch.builder()
-                .name("Santos de Cartier").brand("Cartier")
-                .description("Premier bracelet-montre de l'histoire, design iconique.")
-                .price(new BigDecimal("7000")).stock(7).reference("WSSA0009")
-                .material("Acier & Or jaune").movement("Automatique Cal. 1847 MC").waterResistance("100m")
-                .category(classique).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400").build());
+                .name("Carrera Chronograph").brand("TAG Heuer")
+                .description("Chronographe sportif inspiré de la course automobile.")
+                .price(new BigDecimal("5060")).stock(6).reference("CBN2010.BA0642")
+                .material("Acier inoxydable").movement("Automatique Calibre Heuer 02").waterResistance("100m")
+                .category(sport).active(true)
+                .imageUrl("https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=400").build());
 
+        // ── Connectée ──
         watchRepository.save(Watch.builder()
                 .name("Apple Watch Ultra 2").brand("Apple")
                 .description("Smartwatch ultra-robuste pour les sports extrêmes.")
@@ -95,68 +115,6 @@ public class DataInitializer implements CommandLineRunner {
                 .material("Titane").movement("GPS + Cellular").waterResistance("100m")
                 .category(connectee).active(true)
                 .imageUrl("https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400").build());
-
-        watchRepository.save(Watch.builder()
-                .name("Calatrava Ref. 5196").brand("Patek Philippe")
-                .description("La quintessence de l'élégance classique en or jaune 18K.")
-                .price(new BigDecimal("2000")).stock(2).reference("5196J-001")
-                .material("Or jaune 18K").movement("Manuel Cal. 215 PS").waterResistance("30m")
-                .category(luxe).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400").build());
-
-        watchRepository.save(Watch.builder()
-                .name("Submariner Date")
-                .brand("Rolex")
-                .description("Montre de plongée iconique en acier Oystersteel avec lunette tournante.")
-                .price(new BigDecimal("1000"))
-                .stock(5)
-                .reference("126610LN")
-                .material("Acier Oystersteel")
-                .movement("Automatique Cal. 3235")
-                .waterResistance("300m")
-                .category(luxe)
-                .active(true)
-                .imageUrl("https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Speedmaster Moonwatch")
-                .brand("Omega")
-                .description("La célèbre montre utilisée lors des missions Apollo de la NASA.")
-                .price(new BigDecimal("7200"))
-                .stock(4)
-                .reference("310.30.42.50.01.001")
-                .material("Acier inoxydable")
-                .movement("Manuel Cal. 361")
-                .waterResistance("50m")
-                .category(luxe)
-                .active(true)
-                .imageUrl("https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Carrera Chronograph")
-                .brand("TAG Heuer")
-                .description("Chronographe sportif inspiré de la course automobile.")
-                .price(new BigDecimal("5060"))
-                .stock(6)
-                .reference("CBN2010.BA0642")
-                .material("Acier inoxydable")
-                .movement("Automatique Calibre Heuer 02")
-                .waterResistance("100m")
-                .category(luxe)
-                .active(true)
-                .imageUrl("https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=400")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Navitimer B01").brand("Breitling")
-                .description("Chrono aviation légendaire avec calculateur de vol.")
-                .price(new BigDecimal("9010")).stock(6).reference("AB0137241B1A1")
-                .material("Acier inoxydable").movement("Automatique COSC Cal. B01").waterResistance("30m")
-                .category(sport).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400").build());
-
 
         if (!userRepository.existsByEmail("ousmane@watchstore.com")) {
             userRepository.save(User.builder()
@@ -166,6 +124,6 @@ public class DataInitializer implements CommandLineRunner {
                     .build());
         }
 
-       // log.info("Données de démo initialisées : 4 catégories, 8 montres, 1 utilisateur test");
+        log.info("Données initialisées : 4 catégories, 9 montres, 1 utilisateur");
     }
 }
