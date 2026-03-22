@@ -10,14 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
-
     private final CategoryRepository categoryRepository;
     private final WatchRepository watchRepository;
     private final UserRepository userRepository;
@@ -30,95 +28,55 @@ public class DataInitializer implements CommandLineRunner {
         this.userRepository     = userRepository;
     }
 
-    private Category makeCategory(String name, String description) {
-        Category c = new Category();
-        c.setName(name);
-        c.setDescription(description);
-        return categoryRepository.save(c);
-    }
-
     @Override
     public void run(String... args) {
         if (categoryRepository.count() > 0) return;
+        log.info("Initialisation des donnees de demo...");
 
-        log.info("Initialisation des données VELOUR...");
+        // ── Catégories AURUM ──────────────────────────────────────────
+        Category cremes  = categoryRepository.save(Category.builder()
+                .name("Cremes visage").description("Soins hydratants et eclat").build());
+        Category serums  = categoryRepository.save(Category.builder()
+                .name("Serums precieux").description("Actifs concentres anti-age").build());
+        Category huiles  = categoryRepository.save(Category.builder()
+                .name("Huiles et Elixirs").description("Nutrition intense corps et visage").build());
+        Category masques = categoryRepository.save(Category.builder()
+                .name("Masques royaux").description("Soins intensifs regenerants").build());
 
-        // ── Catégories ────────────────────────────────────────────────
-        Category floral    = makeCategory("Floral",    "Notes florales délicates et féminines");
-        Category oriental  = makeCategory("Oriental",  "Notes chaudes, épicées et envoûtantes");
-        Category aquatique = makeCategory("Aquatique", "Notes marines fraîches et légères");
-        Category boise     = makeCategory("Boisé",     "Notes boisées profondes et élégantes");
+        // ── Produits AURUM ────────────────────────────────────────────
+        saveP("Creme Absolue Soleil d Or",  "AURUM", "Eclat intense, karite precieux, huile d argan bio certifiee",            new BigDecimal("9000"),  cremes,  50, "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600");
+        saveP("Creme Lumiere Doree",         "AURUM", "Anti-taches, vitamine C pure, acide kojique naturel",                   new BigDecimal("7000"),  cremes,  40, "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600");
+        saveP("Creme Nuit Regeneratrice",    "AURUM", "Reparation cellulaire, retinol encapsule, peptides de soie",            new BigDecimal("2000"), cremes,  35, "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600");
+        saveP("Serum Nuit Obsidienne",       "AURUM", "Anti-age profond, retinol pur 0.3%, hyaluronique 3 poids moleculaires", new BigDecimal("4000"), serums,  30, "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600");
+        saveP("Elixir Diamant 24 Carats",    "AURUM", "Poudre d or 24K, extrait de caviar, truffe blanche du Perigord",        new BigDecimal("5000"), serums,  15, "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=600");
+        saveP("Serum Eclat Perle de Nacre",  "AURUM", "Brightening intense, niacinamide 10%, poudre de perle precieuse",       new BigDecimal("8000"),  serums,  25, "https://images.unsplash.com/photo-1619451334792-150fd785ee74?w=600");
+        saveP("Huile Parfumee Ambre Divin",  "AURUM", "Corps et visage, baobab africain, rose musquee du Chili",               new BigDecimal("6000"),  huiles,  45, "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600");
+        saveP("Huile Seche Doree",           "AURUM", "Absorption rapide, argousier, figue de barbarie, jojoba dore",          new BigDecimal("1000"),  huiles,  50, "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=600");
+        saveP("Masque Nuit Velours Violet",  "AURUM", "Regenerant extreme, collagene marin, acide hyaluronique 3D",            new BigDecimal("3000"),  masques, 20, "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600");
+        saveP("Baume Corps Emeraude",        "AURUM", "Hydratation 72h, aloe vera bio, beurre de mangue du Burkina",           new BigDecimal("6000"),  masques, 60, "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=600");
 
-        // ── Parfums VELOUR ─────────────────────────────────────────────
-        watchRepository.save(Watch.builder()
-                .name("Aube Blanche").brand("VELOUR").category(floral)
-                .description("Une fragrance aérienne qui évoque la légèreté du matin. Rose de Grasse, iris de Florence et musc blanc se mêlent dans une danse délicate.")
-                .price(new BigDecimal("5000")).stock(50)
-                .imageUrl("https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=600")
-                .build());
+        // ── Utilisateur test ──────────────────────────────────────────
+        User user = new User();
+        user.setFirstName("Souley Ousmane");
+        user.setLastName("YAOU");
+        user.setEmail("ousmane@aurum.sn");
+        user.setPhone("+221 77 859 66 61");
+        user.setAddress("Medina, Dakar, Senegal");
+        userRepository.save(user);
 
-        watchRepository.save(Watch.builder()
-                .name("Nuit d'Orient").brand("VELOUR").category(oriental)
-                .description("Un voyage sensoriel vers les souks parfumés. Oud précieux, ambre gris et vanille de Madagascar créent un sillage inoubliable.")
-                .price(new BigDecimal("1000")).stock(30)
-                .imageUrl("https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600")
-                .build());
+        log.info("Donnees initialisees : 4 categories, 10 produits AURUM, 1 utilisateur");
+    }
 
-        watchRepository.save(Watch.builder()
-                .name("Écume de Sel").brand("VELOUR").category(aquatique)
-                .description("La fraîcheur de l'océan capturée dans un flacon. Bergamote de Calabre, cèdre bleu et sel marin pour une légèreté absolue.")
-                .price(new BigDecimal("4000")).stock(40)
-                .imageUrl("https://images.unsplash.com/photo-1541643600914-78b084683702?w=600")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Vétiver Noir").brand("VELOUR").category(boise)
-                .description("La noblesse du vétiver d'Haïti magnifiée par le bois de santal et le poivre rose. Un parfum masculin d'une rare élégance.")
-                .price(new BigDecimal("6000")).stock(35)
-                .imageUrl("https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=600")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Jasmin Absolu").brand("VELOUR").category(floral)
-                .description("L'essence pure du jasmin sambac, cueillie à l'aube. Une féminité absolue rehaussée de patchouli et de benjoin doré.")
-                .price(new BigDecimal("7000")).stock(25)
-                .imageUrl("https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Ambre Solaire").brand("VELOUR").category(oriental)
-                .description("Un accord chaud et sensuel d'ambre, de résine de labdanum et d'héliotrope. La chaleur du soleil sur la peau.")
-                .price(new BigDecimal("1500")).stock(30)
-                .imageUrl("https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Iris Poudré").brand("VELOUR").category(floral)
-                .description("La sophistication de l'iris de Florence dans toute sa splendeur. Racine d'iris, violette et cèdre de Virginie.")
-                .price(new BigDecimal("2500")).stock(20)
-                .imageUrl("https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Bois de Santal").brand("VELOUR").category(boise)
-                .description("La pureté crémeuse du santal de Mysore sublimée par la fève tonka et l'encens. Un classique intemporel.")
-                .price(new BigDecimal("3000")).stock(35)
-                .imageUrl("https://images.unsplash.com/photo-1590736969596-4c04f4e5e527?w=600")
-                .build());
-
-        watchRepository.save(Watch.builder()
-                .name("Rose Centifolia").brand("VELOUR").category(floral)
-                .description("La reine des roses dans un écrin de luxe. Rose centifolia de Grasse, pivoine et litchi pour une romantique absolue.")
-                .price(new BigDecimal("2000")).stock(15)
-                .imageUrl("https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600")
-                .build());
-
-        // ── Utilisateur pour demo ───────────────────────────────────────────
-        userRepository.save(User.builder()
-                .firstName("Ousmane").lastName("Yaou")
-                .email("ousmane@velour.com").address("Medina, Dakar")
-                .build());
-
-        log.info("Données initialisées : 4 catégories, 9 parfums, 1 utilisateur");
+    private void saveP(String name, String brand, String desc, BigDecimal price,
+                       Category cat, int stock, String img) {
+        Watch w = new Watch();
+        w.setName(name);
+        w.setBrand(brand);
+        w.setDescription(desc);
+        w.setPrice(price);
+        w.setCategory(cat);
+        w.setStock(stock);
+        w.setImageUrl(img);
+        watchRepository.save(w);
     }
 }
