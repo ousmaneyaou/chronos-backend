@@ -113,7 +113,7 @@ public class DataInitializer implements CommandLineRunner {
                 .imageUrl("https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600")
                 .build());
 
-        // ── Utilisateur démo ───────────────────────────────────────────
+        // ── Utilisateur pour demo ───────────────────────────────────────────
         userRepository.save(User.builder()
                 .firstName("Ousmane").lastName("Yaou")
                 .email("ousmane@velour.com").address("Medina, Dakar")
