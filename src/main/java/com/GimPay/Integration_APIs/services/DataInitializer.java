@@ -26,104 +26,99 @@ public class DataInitializer implements CommandLineRunner {
                            WatchRepository watchRepository,
                            UserRepository userRepository) {
         this.categoryRepository = categoryRepository;
-        this.watchRepository = watchRepository;
-        this.userRepository = userRepository;
+        this.watchRepository    = watchRepository;
+        this.userRepository     = userRepository;
+    }
+
+    private Category makeCategory(String name, String description) {
+        Category c = new Category();
+        c.setName(name);
+        c.setDescription(description);
+        return categoryRepository.save(c);
     }
 
     @Override
     public void run(String... args) {
         if (categoryRepository.count() > 0) return;
-        log.info("Initialisation des données de démo...");
 
-        Category luxe      = categoryRepository.save(Category.builder().name("Luxe").description("Haute horlogerie suisse").build());
-        Category sport     = categoryRepository.save(Category.builder().name("Sport").description("Montres sportives et robustes").build());
-        Category classique = categoryRepository.save(Category.builder().name("Classique").description("Élégance intemporelle").build());
-        Category connectee = categoryRepository.save(Category.builder().name("Connectée").description("Smartwatches modernes").build());
+        log.info("Initialisation des données VELOUR...");
 
-        // ── Luxe ──
+        // ── Catégories ────────────────────────────────────────────────
+        Category floral    = makeCategory("Floral",    "Notes florales délicates et féminines");
+        Category oriental  = makeCategory("Oriental",  "Notes chaudes, épicées et envoûtantes");
+        Category aquatique = makeCategory("Aquatique", "Notes marines fraîches et légères");
+        Category boise     = makeCategory("Boisé",     "Notes boisées profondes et élégantes");
+
+        // ── Parfums VELOUR ─────────────────────────────────────────────
         watchRepository.save(Watch.builder()
-                .name("Royal Oak Chronographe").brand("Audemars Piguet")
-                .description("Icône de l'horlogerie suisse, cadran bleu, bracelet intégré acier.")
-                .price(new BigDecimal("8000")).stock(3).reference("26331ST")
-                .material("Acier inoxydable").movement("Automatique Cal. 2385").waterResistance("50m")
-                .category(luxe).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=400").build());
-
-        watchRepository.save(Watch.builder()
-                .name("Submariner Date").brand("Rolex")
-                .description("La référence ultime des montres de plongée.")
-                .price(new BigDecimal("1200")).stock(5).reference("126610LN")
-                .material("Oystersteel").movement("Automatique Cal. 3235").waterResistance("300m")
-                .category(luxe).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400").build());
+                .name("Aube Blanche").brand("VELOUR").category(floral)
+                .description("Une fragrance aérienne qui évoque la légèreté du matin. Rose de Grasse, iris de Florence et musc blanc se mêlent dans une danse délicate.")
+                .price(new BigDecimal("5000")).stock(50)
+                .imageUrl("https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=600")
+                .build());
 
         watchRepository.save(Watch.builder()
-                .name("Calatrava Ref. 5196").brand("Patek Philippe")
-                .description("La quintessence de l'élégance classique en or jaune 18K.")
-                .price(new BigDecimal("2000")).stock(2).reference("5196J-001")
-                .material("Or jaune 18K").movement("Manuel Cal. 215 PS").waterResistance("30m")
-                .category(luxe).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400").build());
-
-        // ── Classique ──
-        watchRepository.save(Watch.builder()
-                .name("Speedmaster Moonwatch").brand("Omega")
-                .description("La montre des astronautes, portée sur la Lune en 1969.")
-                .price(new BigDecimal("6000")).stock(8).reference("310.30.42.50.01.001")
-                .material("Acier inoxydable").movement("Manuel Cal. 3861").waterResistance("50m")
-                .category(classique).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=400").build());
+                .name("Nuit d'Orient").brand("VELOUR").category(oriental)
+                .description("Un voyage sensoriel vers les souks parfumés. Oud précieux, ambre gris et vanille de Madagascar créent un sillage inoubliable.")
+                .price(new BigDecimal("1000")).stock(30)
+                .imageUrl("https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600")
+                .build());
 
         watchRepository.save(Watch.builder()
-                .name("Santos de Cartier").brand("Cartier")
-                .description("Premier bracelet-montre de l'histoire, design iconique.")
-                .price(new BigDecimal("7000")).stock(7).reference("WSSA0009")
-                .material("Acier & Or jaune").movement("Automatique Cal. 1847 MC").waterResistance("100m")
-                .category(classique).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1547996160-81dfa63595aa?w=400").build());
-
-        // ── Sport ──
-        watchRepository.save(Watch.builder()
-                .name("Seamaster 300").brand("Omega")
-                .description("Montre de plongée professionnelle, style James Bond.")
-                .price(new BigDecimal("5000")).stock(10).reference("234.30.41.21.01.001")
-                .material("Acier inoxydable").movement("Automatique Co-Axial").waterResistance("300m")
-                .category(sport).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=400").build());
+                .name("Écume de Sel").brand("VELOUR").category(aquatique)
+                .description("La fraîcheur de l'océan capturée dans un flacon. Bergamote de Calabre, cèdre bleu et sel marin pour une légèreté absolue.")
+                .price(new BigDecimal("4000")).stock(40)
+                .imageUrl("https://images.unsplash.com/photo-1541643600914-78b084683702?w=600")
+                .build());
 
         watchRepository.save(Watch.builder()
-                .name("Navitimer B01").brand("Breitling")
-                .description("Chrono aviation légendaire avec calculateur de vol.")
-                .price(new BigDecimal("5500")).stock(6).reference("AB0137241B1A1")
-                .material("Acier inoxydable").movement("Automatique COSC Cal. B01").waterResistance("30m")
-                .category(sport).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400").build());
+                .name("Vétiver Noir").brand("VELOUR").category(boise)
+                .description("La noblesse du vétiver d'Haïti magnifiée par le bois de santal et le poivre rose. Un parfum masculin d'une rare élégance.")
+                .price(new BigDecimal("6000")).stock(35)
+                .imageUrl("https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=600")
+                .build());
 
         watchRepository.save(Watch.builder()
-                .name("Carrera Chronograph").brand("TAG Heuer")
-                .description("Chronographe sportif inspiré de la course automobile.")
-                .price(new BigDecimal("5060")).stock(6).reference("CBN2010.BA0642")
-                .material("Acier inoxydable").movement("Automatique Calibre Heuer 02").waterResistance("100m")
-                .category(sport).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=400").build());
+                .name("Jasmin Absolu").brand("VELOUR").category(floral)
+                .description("L'essence pure du jasmin sambac, cueillie à l'aube. Une féminité absolue rehaussée de patchouli et de benjoin doré.")
+                .price(new BigDecimal("7000")).stock(25)
+                .imageUrl("https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600")
+                .build());
 
-        // ── Connectée ──
         watchRepository.save(Watch.builder()
-                .name("Apple Watch Ultra 2").brand("Apple")
-                .description("Smartwatch ultra-robuste pour les sports extrêmes.")
-                .price(new BigDecimal("9500")).stock(20).reference("MQDY3LL/A")
-                .material("Titane").movement("GPS + Cellular").waterResistance("100m")
-                .category(connectee).active(true)
-                .imageUrl("https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400").build());
+                .name("Ambre Solaire").brand("VELOUR").category(oriental)
+                .description("Un accord chaud et sensuel d'ambre, de résine de labdanum et d'héliotrope. La chaleur du soleil sur la peau.")
+                .price(new BigDecimal("1500")).stock(30)
+                .imageUrl("https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600")
+                .build());
 
-        if (!userRepository.existsByEmail("ousmane@watchstore.com")) {
-            userRepository.save(User.builder()
-                    .email("ousmane@watchstore.com")
-                    .firstName("Ousmane").lastName("Yaou")
-                    .phone("+221778596661").address("Dakar, Sénégal")
-                    .build());
-        }
+        watchRepository.save(Watch.builder()
+                .name("Iris Poudré").brand("VELOUR").category(floral)
+                .description("La sophistication de l'iris de Florence dans toute sa splendeur. Racine d'iris, violette et cèdre de Virginie.")
+                .price(new BigDecimal("2500")).stock(20)
+                .imageUrl("https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600")
+                .build());
 
-        log.info("Données initialisées : 4 catégories, 9 montres, 1 utilisateur");
+        watchRepository.save(Watch.builder()
+                .name("Bois de Santal").brand("VELOUR").category(boise)
+                .description("La pureté crémeuse du santal de Mysore sublimée par la fève tonka et l'encens. Un classique intemporel.")
+                .price(new BigDecimal("3000")).stock(35)
+                .imageUrl("https://images.unsplash.com/photo-1590736969596-4c04f4e5e527?w=600")
+                .build());
+
+        watchRepository.save(Watch.builder()
+                .name("Rose Centifolia").brand("VELOUR").category(floral)
+                .description("La reine des roses dans un écrin de luxe. Rose centifolia de Grasse, pivoine et litchi pour une romantique absolue.")
+                .price(new BigDecimal("2000")).stock(15)
+                .imageUrl("https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600")
+                .build());
+
+        // ── Utilisateur démo ───────────────────────────────────────────
+        userRepository.save(User.builder()
+                .firstName("Ousmane").lastName("Yaou")
+                .email("ousmane@velour.com").address("Medina, Dakar")
+                .build());
+
+        log.info("Données initialisées : 4 catégories, 9 parfums, 1 utilisateur");
     }
 }
