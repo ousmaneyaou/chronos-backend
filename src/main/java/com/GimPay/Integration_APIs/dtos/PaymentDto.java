@@ -14,6 +14,7 @@ public class PaymentDto {
         private String method;
         private String actionCode;
         private String systemReference;
+        private String merchantReference; // ← AJOUTÉ
         private Boolean challengeRequired;
         private String threeDsUrl;
         private String threeDsTxnId;
@@ -27,6 +28,7 @@ public class PaymentDto {
         public String getMethod() { return method; }
         public String getActionCode() { return actionCode; }
         public String getSystemReference() { return systemReference; }
+        public String getMerchantReference() { return merchantReference; } // ← AJOUTÉ
         public Boolean getChallengeRequired() { return challengeRequired; }
         public String getThreeDsUrl() { return threeDsUrl; }
         public String getThreeDsTxnId() { return threeDsTxnId; }
@@ -38,6 +40,7 @@ public class PaymentDto {
         public void setMethod(String v) { this.method = v; }
         public void setActionCode(String v) { this.actionCode = v; }
         public void setSystemReference(String v) { this.systemReference = v; }
+        public void setMerchantReference(String v) { this.merchantReference = v; } // ← AJOUTÉ
         public void setChallengeRequired(Boolean v) { this.challengeRequired = v; }
         public void setThreeDsUrl(String v) { this.threeDsUrl = v; }
         public void setThreeDsTxnId(String v) { this.threeDsTxnId = v; }
@@ -52,6 +55,7 @@ public class PaymentDto {
             public Builder method(String v) { r.method = v; return this; }
             public Builder actionCode(String v) { r.actionCode = v; return this; }
             public Builder systemReference(String v) { r.systemReference = v; return this; }
+            public Builder merchantReference(String v) { r.merchantReference = v; return this; } // ← AJOUTÉ
             public Builder challengeRequired(Boolean v) { r.challengeRequired = v; return this; }
             public Builder threeDsUrl(String v) { r.threeDsUrl = v; return this; }
             public Builder threeDsTxnId(String v) { r.threeDsTxnId = v; return this; }
@@ -68,7 +72,6 @@ public class PaymentDto {
         private String cvv2;
         private Boolean disable3ds;
         private String returnUrl;
-        // Optionnel — pour tests HMAC manuels
         private String secureHashOverride;
         private String dateTimeOverride;
 

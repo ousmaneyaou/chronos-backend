@@ -36,9 +36,6 @@ public class OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
-    // ← NOUVEAU : URL dynamique
-    // En local   : http://localhost:8020  (valeur par défaut)
-    // En prod    : https://ton-app.railway.app  (injectée par Railway)
     @Value("${app.base-url:http://localhost:8020}")
     private String appBaseUrl;
 
@@ -66,9 +63,6 @@ public class OrderService {
         this.gimPayService       = gimPayService;
     }
 
-    // ─────────────────────────────────────────────
-    // Créer commande + InitiateOrder GIM Pay
-    // ─────────────────────────────────────────────
     @Transactional
     public OrderDto.Response createOrder(OrderDto.CreateRequest req) {
         User user = userRepository.findById(req.getUserId())
@@ -102,10 +96,8 @@ public class OrderService {
         }
         cartItemRepository.deleteByUserId(user.getId());
 
-        String ref    = "ORDER_" + order.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
-        String expiry = LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
-
-        // ← CORRIGÉ : plus de localhost en dur
+        String ref        = "ORDER_" + order.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
+        String expiry     = LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
         String callbackUrl = appBaseUrl + "/api/payment/webhook";
         log.info("Webhook URL = {}", callbackUrl);
 
@@ -134,17 +126,12 @@ public class OrderService {
         return toDto(saved);
     }
 
-    // ─────────────────────────────────────────────
-    // Payer par carte
-    // ─────────────────────────────────────────────
     @Transactional
     public PaymentDto.Response payByCard(PaymentDto.PayByCardRequest req) {
         Order order = orderRepository.findById(req.getOrderId())
                 .orElseThrow(() -> new RuntimeException("Commande non trouvée: " + req.getOrderId()));
 
         String ref       = "PAY_" + order.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
-
-        // ← CORRIGÉ : returnUrl dynamique aussi
         String returnUrl = req.getReturnUrl() != null
                 ? req.getReturnUrl()
                 : appBaseUrl + "/payment/result";
@@ -204,9 +191,6 @@ public class OrderService {
         return toPaymentDto(payment);
     }
 
-    // ─────────────────────────────────────────────
-    // Webhook
-    // ─────────────────────────────────────────────
     @Transactional
     public void handleWebhook(PaymentDto.GimPayByCardResponse data) {
         log.info("Webhook → ref:{} success:{} code:{}",
@@ -229,9 +213,6 @@ public class OrderService {
         });
     }
 
-    // ─────────────────────────────────────────────
-    // Historique
-    // ─────────────────────────────────────────────
     public List<OrderDto.Response> getByUser(Long userId) {
         List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
         List<OrderDto.Response> result = new ArrayList<>();
@@ -245,9 +226,6 @@ public class OrderService {
         return toDto(o);
     }
 
-    // ─────────────────────────────────────────────
-    // Mappers
-    // ─────────────────────────────────────────────
     private OrderDto.Response toDto(Order order) {
         List<OrderDto.ItemResponse> items = new ArrayList<>();
         if (order.getItems() != null) {
@@ -276,6 +254,7 @@ public class OrderService {
                 .id(p.getId()).amount(p.getAmount()).status(p.getStatus().name())
                 .method(p.getMethod() != null ? p.getMethod().name() : null)
                 .actionCode(p.getActionCode()).systemReference(p.getSystemReference())
+                .merchantReference(p.getMerchantReference()) // ← AJOUTÉ
                 .challengeRequired(p.getChallengeRequired())
                 .threeDsUrl(p.getThreeDsUrl()).threeDsTxnId(p.getThreeDsTxnId())
                 .createdAt(p.getCreatedAt()).build();
