@@ -96,8 +96,8 @@ public class OrderService {
         }
         cartItemRepository.deleteByUserId(user.getId());
 
-        String ref        = "ORDER_" + order.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
-        String expiry     = LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+        String ref         = "ORDER_" + order.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
+        String expiry      = LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
         String callbackUrl = appBaseUrl + "/api/payment/webhook";
         log.info("Webhook URL = {}", callbackUrl);
 
@@ -122,8 +122,7 @@ public class OrderService {
             log.warn("InitiateOrder exception: {}", e.getMessage());
         }
 
-        Order saved = orderRepository.findById(order.getId()).orElse(order);
-        return toDto(saved);
+        return toDto(orderRepository.findById(order.getId()).orElse(order));
     }
 
     @Transactional
@@ -173,7 +172,7 @@ public class OrderService {
                 if ("909".equals(actionCode)) {
                     payment.setStatus(PaymentStatus.INITIATED);
                     order.setStatus(OrderStatus.PAYMENT_INITIATED);
-                    log.info("Code 909 (carte test UAT) → PAYMENT_INITIATED. Ref:{}", gimResp.getMerchantReference());
+                    log.info("Code 909 (carte test UAT) → PAYMENT_INITIATED");
                 } else {
                     payment.setStatus(PaymentStatus.FAILED);
                     order.setStatus(OrderStatus.FAILED);
@@ -196,6 +195,22 @@ public class OrderService {
         log.info("Webhook → ref:{} success:{} code:{}",
                 data.getMerchantReference(), data.getSuccess(), data.getActionCode());
 
+        // ══════════════════════════════════════════════════════════════
+        // GIM Pay envoie 2 webhooks pour le 3DS :
+        //
+        // Webhook 1 (immédiat) : success=false + code=99
+        //   → Signifie "challenge en attente" — PAS un vrai échec
+        //   → On ignore complètement ce webhook
+        //
+        // Webhook 2 (après OTP) : success=true + code=00 (ou autre)
+        //   → Résultat final après validation OTP bancaire
+        //   → On met à jour le statut
+        // ══════════════════════════════════════════════════════════════
+        if (Boolean.FALSE.equals(data.getSuccess()) && "99".equals(data.getActionCode())) {
+            log.info("Webhook 3DS intermédiaire ignoré (code 99) — attente OTP client");
+            return;
+        }
+
         paymentRepository.findByMerchantReference(data.getMerchantReference()).ifPresent(payment -> {
             Order o = payment.getOrder();
             if (Boolean.TRUE.equals(data.getSuccess())) {
@@ -205,7 +220,7 @@ public class OrderService {
             } else {
                 payment.setStatus(PaymentStatus.FAILED);
                 o.setStatus(OrderStatus.FAILED);
-                log.warn("❌ Webhook FAILED → commande #{}", o.getId());
+                log.warn("❌ Webhook FAILED → commande #{} code:{}", o.getId(), data.getActionCode());
             }
             payment.setActionCode(data.getActionCode());
             orderRepository.save(o);
@@ -254,7 +269,7 @@ public class OrderService {
                 .id(p.getId()).amount(p.getAmount()).status(p.getStatus().name())
                 .method(p.getMethod() != null ? p.getMethod().name() : null)
                 .actionCode(p.getActionCode()).systemReference(p.getSystemReference())
-                .merchantReference(p.getMerchantReference()) // ← AJOUTÉ
+                .merchantReference(p.getMerchantReference())
                 .challengeRequired(p.getChallengeRequired())
                 .threeDsUrl(p.getThreeDsUrl()).threeDsTxnId(p.getThreeDsTxnId())
                 .createdAt(p.getCreatedAt()).build();
