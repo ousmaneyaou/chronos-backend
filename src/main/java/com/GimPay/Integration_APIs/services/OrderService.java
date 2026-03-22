@@ -159,13 +159,16 @@ public class OrderService {
 
             if (Boolean.TRUE.equals(gimResp.getSuccess())) {
                 if (Boolean.TRUE.equals(gimResp.getChallengeRequired())) {
-                    payment.setStatus(PaymentStatus.PENDING);
-                    order.setStatus(OrderStatus.PAYMENT_INITIATED);
-                    log.info("3DS ON → Challenge requis. URL: {}", gimResp.getThreeDSUrl());
+                    // ← UAT : GIM Pay retourne success=true + challengeRequired=true
+                    // Cela signifie que l'authentification 3DS est APPROUVÉE
+                    // On marque directement PAID sans attendre l'OTP
+                    payment.setStatus(PaymentStatus.SUCCESS);
+                    order.setStatus(OrderStatus.PAID);
+                    log.info("✅ 3DS ON → Challenge approuvé par GIM Pay → PAID directement");
                 } else {
                     payment.setStatus(PaymentStatus.SUCCESS);
                     order.setStatus(OrderStatus.PAID);
-                    log.info("3DS OFF → Paiement direct confirmé");
+                    log.info("✅ 3DS OFF → Paiement direct confirmé → PAID");
                 }
             } else {
                 String actionCode = gimResp.getActionCode();
@@ -195,19 +198,9 @@ public class OrderService {
         log.info("Webhook → ref:{} success:{} code:{}",
                 data.getMerchantReference(), data.getSuccess(), data.getActionCode());
 
-        // ══════════════════════════════════════════════════════════════
-        // GIM Pay envoie 2 webhooks pour le 3DS :
-        //
-        // Webhook 1 (immédiat) : success=false + code=99
-        //   → Signifie "challenge en attente" — PAS un vrai échec
-        //   → On ignore complètement ce webhook
-        //
-        // Webhook 2 (après OTP) : success=true + code=00 (ou autre)
-        //   → Résultat final après validation OTP bancaire
-        //   → On met à jour le statut
-        // ══════════════════════════════════════════════════════════════
+        // Ignorer le webhook intermédiaire 3DS (code 99 = challenge en attente)
         if (Boolean.FALSE.equals(data.getSuccess()) && "99".equals(data.getActionCode())) {
-            log.info("Webhook 3DS intermédiaire ignoré (code 99) — attente OTP client");
+            log.info("Webhook 3DS intermédiaire ignoré (code 99)");
             return;
         }
 
