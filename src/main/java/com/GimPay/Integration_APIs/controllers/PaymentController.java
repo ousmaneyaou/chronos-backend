@@ -2,6 +2,8 @@ package com.GimPay.Integration_APIs.controllers;
 
 import com.GimPay.Integration_APIs.dtos.PaymentDto;
 import com.GimPay.Integration_APIs.services.OrderService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,46 +23,62 @@ public class PaymentController {
     private String appBaseUrl;
 
     private final OrderService orderService;
+    private final ObjectMapper objectMapper;
 
-    public PaymentController(OrderService orderService) {
+    public PaymentController(OrderService orderService, ObjectMapper objectMapper) {
         this.orderService = orderService;
+        this.objectMapper = objectMapper;
     }
 
-    // ── POST : PayByCard (carte directe) ─────────────────────────────
+    // ── POST : PayByCard ─────────────────────────────────────────────
     @PostMapping("/pay")
     public ResponseEntity<PaymentDto.Response> payByCard(
             @RequestBody PaymentDto.PayByCardRequest request) {
         return ResponseEntity.ok(orderService.payByCard(request));
     }
 
-    // ── POST : Webhook GIM Pay (appelé par le serveur GIM Pay) ───────
+    // ── POST : Webhook GIM Pay ───────────────────────────────────────
     @PostMapping("/webhook")
     public ResponseEntity<Void> webhookPost(
-            @RequestBody PaymentDto.GimPayByCardResponse payload) {
-        log.info("Webhook POST GIM Pay reçu: merchantRef={}, success={}",
-                payload.getMerchantReference(), payload.getSuccess());
-        orderService.handleWebhook(payload);
+            @RequestBody(required = false) String rawBody) {
+
+        log.info("=== WEBHOOK POST REÇU ===");
+        log.info("Body brut : {}", rawBody);
+
+        if (rawBody == null || rawBody.isBlank()) {
+            log.warn("⚠️ Body vide sur webhook POST");
+            return ResponseEntity.ok().build();
+        }
+
+        try {
+            PaymentDto.GimPayByCardResponse payload =
+                    objectMapper.readValue(rawBody, PaymentDto.GimPayByCardResponse.class);
+            log.info("Parsed → ref:{} success:{} code:{} sysRef:{}",
+                    payload.getMerchantReference(), payload.getSuccess(),
+                    payload.getActionCode(), payload.getSystemReference());
+            orderService.handleWebhook(payload);
+        } catch (Exception e) {
+            log.error("❌ Erreur parse webhook POST: {} — body: {}", e.getMessage(), rawBody);
+        }
+
         return ResponseEntity.ok().build();
     }
 
-    // ── GET : Retour PayLink GIM Pay (redirection navigateur) ────────
-    // GIM Pay redirige le navigateur ici après paiement via PayLink
-    // Paramètres : success=1, MerchantReference=ORDER_XX, SystemReference=...
+    // ── GET : Retour PayLink GIM Pay ─────────────────────────────────
     @GetMapping("/webhook")
     public ResponseEntity<Void> webhookGet(
             @RequestParam Map<String, String> params) {
 
-        log.info("Webhook GET PayLink reçu: {}", params);
+        log.info("=== WEBHOOK GET REÇU === params: {}", params);
 
-        String merchantRef   = params.get("MerchantReference");
-        String successStr    = params.get("success");
-        String systemRef     = params.get("SystemReference");
-        String actionCode    = params.get("ActionCode");
+        String merchantRef = params.get("MerchantReference");
+        String successStr  = params.get("success");
+        String systemRef   = params.get("SystemReference");
+        String actionCode  = params.get("ActionCode");
 
         boolean success = "1".equals(successStr) || "true".equalsIgnoreCase(successStr);
 
         if (merchantRef != null) {
-            // Construire un objet de réponse et appeler handleWebhook
             PaymentDto.GimPayByCardResponse payload = new PaymentDto.GimPayByCardResponse();
             payload.setMerchantReference(merchantRef);
             payload.setSuccess(success);
@@ -69,12 +87,13 @@ public class PaymentController {
                 try { payload.setSystemReference(Long.parseLong(systemRef)); }
                 catch (NumberFormatException ignored) {}
             }
-
-            log.info("PayLink GET → ref:{} success:{}", merchantRef, success);
+            log.info("PayLink GET → ref:{} success:{} code:{}", merchantRef, success, actionCode);
             orderService.handleWebhook(payload);
+        } else {
+            log.warn("⚠️ MerchantReference absent dans webhook GET");
         }
 
-        // Rediriger vers le frontend
+        // Redirection vers le frontend
         String frontendUrl = appBaseUrl.contains("railway")
                 ? "https://chronos-frontend-opal.vercel.app/orders"
                 : "http://localhost:3000/orders";
