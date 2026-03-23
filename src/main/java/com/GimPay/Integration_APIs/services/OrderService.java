@@ -98,6 +98,10 @@ public class OrderService {
 
         String ref         = "ORDER_" + order.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
         String expiry      = LocalDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+
+        // ← CallbackUrl = endpoint GET sur le backend
+        // GIM Pay appellera ce lien après paiement PayLink
+        // Le controller GET redirige ensuite vers le frontend
         String callbackUrl = appBaseUrl + "/api/payment/webhook";
         log.info("Webhook URL = {}", callbackUrl);
 
@@ -159,12 +163,9 @@ public class OrderService {
 
             if (Boolean.TRUE.equals(gimResp.getSuccess())) {
                 if (Boolean.TRUE.equals(gimResp.getChallengeRequired())) {
-                    // ← UAT : GIM Pay retourne success=true + challengeRequired=true
-                    // Cela signifie que l'authentification 3DS est APPROUVÉE
-                    // On marque directement PAID sans attendre l'OTP
                     payment.setStatus(PaymentStatus.SUCCESS);
                     order.setStatus(OrderStatus.PAID);
-                    log.info("✅ 3DS ON → Challenge approuvé par GIM Pay → PAID directement");
+                    log.info("✅ 3DS ON → Challenge approuvé → PAID directement");
                 } else {
                     payment.setStatus(PaymentStatus.SUCCESS);
                     order.setStatus(OrderStatus.PAID);
@@ -198,12 +199,21 @@ public class OrderService {
         log.info("Webhook → ref:{} success:{} code:{}",
                 data.getMerchantReference(), data.getSuccess(), data.getActionCode());
 
-        // Ignorer le webhook intermédiaire 3DS (code 99 = challenge en attente)
+        // Ignorer webhook intermédiaire 3DS (code 99)
         if (Boolean.FALSE.equals(data.getSuccess()) && "99".equals(data.getActionCode())) {
             log.info("Webhook 3DS intermédiaire ignoré (code 99)");
             return;
         }
 
+        // ── Cas PayLink : la MerchantReference commence par ORDER_ ──
+        // GIM Pay envoie la référence de la commande (pas du paiement)
+        if (data.getMerchantReference() != null
+                && data.getMerchantReference().startsWith("ORDER_")) {
+            handlePayLinkWebhook(data);
+            return;
+        }
+
+        // ── Cas PayByCard : la MerchantReference commence par PAY_ ──
         paymentRepository.findByMerchantReference(data.getMerchantReference()).ifPresent(payment -> {
             Order o = payment.getOrder();
             if (Boolean.TRUE.equals(data.getSuccess())) {
@@ -219,6 +229,54 @@ public class OrderService {
             orderRepository.save(o);
             paymentRepository.save(payment);
         });
+    }
+
+    // ── Traitement PayLink ───────────────────────────────────────────
+    // GIM Pay retourne ORDER_XX_xxxx comme MerchantReference pour le PayLink
+    private void handlePayLinkWebhook(PaymentDto.GimPayByCardResponse data) {
+        log.info("PayLink webhook → ref:{} success:{}", data.getMerchantReference(), data.getSuccess());
+
+        // Trouver la commande via le gimPayOrderRefId ou chercher par ref
+        orderRepository.findAll().stream()
+                .filter(o -> data.getMerchantReference().equals(
+                        "ORDER_" + o.getId() + "_" + (o.getGimPayOrderRefId() != null ? "" : "")
+                ) || orderRefMatches(o, data.getMerchantReference()))
+                .findFirst()
+                .ifPresent(order -> {
+                    if (Boolean.TRUE.equals(data.getSuccess())) {
+                        order.setStatus(OrderStatus.PAID);
+                        orderRepository.save(order);
+
+                        // Créer ou mettre à jour le paiement
+                        Optional<Payment> payOpt = paymentRepository.findByOrderId(order.getId());
+                        Payment payment = payOpt.orElse(Payment.builder()
+                                .order(order).amount(order.getTotalAmount()).build());
+                        payment.setStatus(PaymentStatus.SUCCESS);
+                        payment.setMethod(PaymentMethod.CARD_3DS_OFF);
+                        payment.setMerchantReference(data.getMerchantReference());
+                        if (data.getSystemReference() != null)
+                            payment.setSystemReference(data.getSystemReference().toString());
+                        paymentRepository.save(payment);
+                        log.info("✅ PayLink PAID → commande #{}", order.getId());
+                    } else {
+                        order.setStatus(OrderStatus.FAILED);
+                        orderRepository.save(order);
+                        log.warn("❌ PayLink FAILED → commande #{}", order.getId());
+                    }
+                });
+    }
+
+    private boolean orderRefMatches(Order order, String ref) {
+        // ref format : ORDER_40_0348b5e6
+        // Extraire l'ID de commande depuis la ref
+        try {
+            String[] parts = ref.split("_");
+            if (parts.length >= 2) {
+                Long orderId = Long.parseLong(parts[1]);
+                return orderId.equals(order.getId());
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     public List<OrderDto.Response> getByUser(Long userId) {
